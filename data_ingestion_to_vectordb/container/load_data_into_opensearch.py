@@ -25,8 +25,6 @@ from sagemaker.session import Session
 
 from langchain.document_loaders import ReadTheDocsLoader
 from langchain.vectorstores import OpenSearchVectorSearch
-from langchain.embeddings import SagemakerEndpointEmbeddings
-from langchain.llms.sagemaker_endpoint import ContentHandlerBase
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # from opensearchpy.client import OpenSearch
@@ -197,7 +195,6 @@ if __name__ == "__main__":
         logger.info(f"index={args.opensearch_index_name} does exists, going to call add_documents")
         shard_start_index = 0
 
-    
     task = partial(process_shard,
                    embeddings_model_endpoint_name=args.embeddings_model_endpoint_name,
                    aws_region=args.aws_region,
