@@ -50,7 +50,7 @@ For example:
 <pre>
 {
   "user_name": "<i>AWS_IAM_User_Name</i>",
-  "collection_name": "<i>llm-rag-vectordb</i>",
+  "collection_name": "<i>llm-rag-vectordb</i>"
 }
 </pre>
 
