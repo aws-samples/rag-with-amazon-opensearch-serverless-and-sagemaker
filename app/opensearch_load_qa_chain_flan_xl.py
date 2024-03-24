@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- encoding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+
 import os
 import json
 import logging
@@ -21,7 +25,6 @@ from opensearchpy import (
     RequestsHttpConnection
 )
 
-# logger = logging.getLogger(__name__)
 logger = logging.getLogger()
 logging.basicConfig(format='%(asctime)s,%(module)s,%(processName)s,%(levelname)s,%(message)s', level=logging.INFO, stream=sys.stderr)
 

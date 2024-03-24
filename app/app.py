@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+# -*- encoding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 softtabstop=4 expandtab
+
 import streamlit as st
 import uuid
 
-import opensearch_chat_flan_xl as flanxl
+import opensearch_chat_flan_xl as llm_app
 
 
 USER_ICON = "images/user-icon.png"
@@ -22,8 +26,8 @@ else:
 
 
 if 'llm_chain' not in st.session_state:
-    st.session_state['llm_app'] = flanxl
-    st.session_state['llm_chain'] = flanxl.build_chain()
+    st.session_state['llm_app'] = llm_app
+    st.session_state['llm_chain'] = llm_app.build_chain()
 
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = []
@@ -181,4 +185,3 @@ with st.container():
 
 st.markdown('---')
 input = st.text_input("You are talking to an AI, ask any question.", key="input", on_change=handle_input)
-
