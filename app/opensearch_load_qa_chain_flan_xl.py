@@ -47,7 +47,7 @@ class SagemakerEndpointEmbeddingsJumpStart(SagemakerEndpointEmbeddings):
             List of embeddings, one for each text.
         """
         results = []
-        #print(f"length of texts = {len(texts)}")
+
         _chunk_size = len(texts) if chunk_size > len(texts) else chunk_size
 
         for i in range(0, len(texts), _chunk_size):
