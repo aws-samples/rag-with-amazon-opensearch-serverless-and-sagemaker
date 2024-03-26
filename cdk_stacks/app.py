@@ -10,8 +10,6 @@ from rag_with_aoss import (
   VpcStack,
   OpsServerlessVectorSearchStack,
   SageMakerStudioStack,
-  # EmbeddingEndpointStack,
-  # LLMEndpointStack,
   SageMakerEmbeddingEndpointStack,
   SageMakerJumpStartLLMEndpointStack
 )
@@ -38,19 +36,11 @@ ops_stack = OpsServerlessVectorSearchStack(app, 'RAGOpenSearchServerlessStack',
 )
 ops_stack.add_dependency(sm_studio_stack)
 
-# sm_embedding_endpoint = EmbeddingEndpointStack(app, 'EmbeddingEndpointStack',
-#   sm_studio_stack.sagemaker_execution_role_arn,
-#   env=APP_ENV
-# )
 sm_embedding_endpoint = SageMakerEmbeddingEndpointStack(app, 'EmbeddingEndpointStack',
   env=APP_ENV
 )
 sm_embedding_endpoint.add_dependency(sm_studio_stack)
 
-# sm_llm_endpoint = LLMEndpointStack(app, 'LLMEndpointStack',
-#   sm_studio_stack.sagemaker_execution_role_arn,
-#   env=APP_ENV
-# )
 sm_llm_endpoint = SageMakerJumpStartLLMEndpointStack(app, 'LLMEndpointStack',
   env=APP_ENV
 )
