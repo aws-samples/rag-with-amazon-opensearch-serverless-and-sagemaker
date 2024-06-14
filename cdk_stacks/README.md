@@ -50,9 +50,15 @@ For example:
 <pre>
 {
   "user_name": "<i>AWS_IAM_User_Name</i>",
-  "collection_name": "<i>llm-rag-vectordb</i>"
+  "collection_name": "<i>llm-rag-vectordb</i>",
+  "jumpstart_model_info": {
+    "model_id": "meta-textgeneration-llama-2-7b-f",
+    "version": "2.0.1"
+  }
 }
 </pre>
+
+:information_source: The `model_id`, and `version` provided by SageMaker JumpStart can be found in [**SageMaker Built-in Algorithms with pre-trained Model Table**](https://sagemaker.readthedocs.io/en/stable/doc_utils/pretrainedmodels.html).
 
 Now this point you can now synthesize the CloudFormation template for this code.
 
@@ -132,6 +138,7 @@ Enjoy!
  * [Identity and Access Management for Amazon OpenSearch Serverless](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/security-iam-serverless.html)
  * [Build a powerful question answering bot with Amazon SageMaker, Amazon OpenSearch Service, Streamlit, and LangChain (2023-05-25)](https://aws.amazon.com/blogs/machine-learning/build-a-powerful-question-answering-bot-with-amazon-sagemaker-amazon-opensearch-service-streamlit-and-langchain/)
  * [Use proprietary foundation models from Amazon SageMaker JumpStart in Amazon SageMaker Studio (2023-06-27)](https://aws.amazon.com/blogs/machine-learning/use-proprietary-foundation-models-from-amazon-sagemaker-jumpstart-in-amazon-sagemaker-studio/)
+ * [SageMaker Built-in Algorithms with pre-trained Model Table](https://sagemaker.readthedocs.io/en/stable/doc_utils/pretrainedmodels.html)
  * [AWS Deep Learning Containers Images](https://docs.aws.amazon.com/deep-learning-containers/latest/devguide/deep-learning-containers-images.html)
  * [OpenSearch Popular APIs](https://opensearch.org/docs/latest/opensearch/popular-api/)
  * [Using the Amazon SageMaker Studio Image Build CLI to build container images from your Studio notebooks (2020-09-14)](https://aws.amazon.com/blogs/machine-learning/using-the-amazon-sagemaker-studio-image-build-cli-to-build-container-images-from-your-studio-notebooks/)

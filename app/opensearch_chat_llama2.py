@@ -6,7 +6,7 @@ import os
 import json
 import logging
 import sys
-from typing import List, Callable
+from typing import List
 from urllib.parse import urlparse
 
 import boto3
@@ -126,33 +126,47 @@ def build_chain():
     embeddings_model_endpoint = os.environ["EMBEDDING_ENDPOINT_NAME"]
     text2text_model_endpoint = os.environ["TEXT2TEXT_ENDPOINT_NAME"]
 
+    # https://github.com/aws/amazon-sagemaker-examples/blob/main/introduction_to_amazon_algorithms/jumpstart-foundation-models/llama-2-chat-completion.ipynb
     class ContentHandler(LLMContentHandler):
         content_type = "application/json"
         accepts = "application/json"
 
         def transform_input(self, prompt: str, model_kwargs: dict) -> bytes:
-            input_str = json.dumps({"inputs": prompt, **model_kwargs})
-            return input_str.encode('utf-8')
+            system_prompt = "You are a helpful assistant. Always answer to questions as helpfully as possible." \
+                            " If you don't know the answer to a question, say I don't know the answer"
+
+            payload = {
+                "inputs": [
+                    [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
+                ],
+                "parameters": model_kwargs,
+            }
+            input_str = json.dumps(payload)
+            return input_str.encode("utf-8")
 
         def transform_output(self, output: bytes) -> str:
             response_json = json.loads(output.read().decode("utf-8"))
-            return response_json[0]["generated_text"]
+            content = response_json[0]["generation"]["content"]
+            return content
 
     content_handler = ContentHandler()
 
+    # https://github.com/aws/amazon-sagemaker-examples/blob/main/introduction_to_amazon_algorithms/jumpstart-foundation-models/llama-2-text-completion.ipynb
     model_kwargs = {
-      "max_length": 500,
-      "num_return_sequences": 1,
-      "top_k": 250,
-      "top_p": 0.95,
-      "do_sample": False,
-      "temperature": 1
+        "max_new_tokens": 256,
+        "top_p": 0.9,
+        "temperature": 0.6,
+        "return_full_text": False,
     }
 
     llm = SagemakerEndpoint(
         endpoint_name=text2text_model_endpoint,
         region_name=region,
         model_kwargs=model_kwargs,
+        endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
         content_handler=content_handler
     )
 
@@ -193,7 +207,8 @@ def build_chain():
         retriever=retriever,
         condense_question_prompt=standalone_question_prompt,
         return_source_documents=True,
-        combine_docs_chain_kwargs={"prompt":PROMPT}
+        combine_docs_chain_kwargs={"prompt":PROMPT},
+        verbose=False
     )
 
     logger.info(f"\ntype('qa'): \"{type(qa)}\"\n")
@@ -220,7 +235,7 @@ if __name__ == "__main__":
         chat_history.append((query, result["answer"]))
         print(bcolors.OKGREEN + result['answer'] + bcolors.ENDC)
         if 'source_documents' in result:
-            print(bcolors.OKGREEN + 'Sources:')
+            print(bcolors.OKGREEN + '\nSources:')
             for d in result['source_documents']:
                 print(d.metadata['source'])
         print(bcolors.ENDC)

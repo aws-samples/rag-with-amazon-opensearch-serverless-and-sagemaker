@@ -39,11 +39,11 @@ ops_stack.add_dependency(sm_studio_stack)
 sm_embedding_endpoint = SageMakerEmbeddingEndpointStack(app, 'EmbeddingEndpointStack',
   env=APP_ENV
 )
-sm_embedding_endpoint.add_dependency(sm_studio_stack)
+sm_embedding_endpoint.add_dependency(ops_stack)
 
 sm_llm_endpoint = SageMakerJumpStartLLMEndpointStack(app, 'LLMEndpointStack',
   env=APP_ENV
 )
-sm_llm_endpoint.add_dependency(sm_studio_stack)
+sm_llm_endpoint.add_dependency(sm_embedding_endpoint)
 
 app.synth()

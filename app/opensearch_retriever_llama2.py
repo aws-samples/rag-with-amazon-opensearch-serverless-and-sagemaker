@@ -6,7 +6,7 @@ import os
 import json
 import logging
 import sys
-from typing import List, Callable
+from typing import List
 from urllib.parse import urlparse
 
 import boto3
@@ -21,7 +21,7 @@ from langchain.llms.sagemaker_endpoint import (
 )
 
 from langchain.prompts import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import RetrievalQA
 
 from opensearchpy import (
     AWSV4SignerAuth,
@@ -31,20 +31,6 @@ from opensearchpy import (
 logger = logging.getLogger()
 logging.basicConfig(format='%(asctime)s,%(module)s,%(processName)s,%(levelname)s,%(message)s', level=logging.INFO, stream=sys.stderr)
 
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-MAX_HISTORY_LENGTH = 5
 CONNECTION_TIMEOUT = 1000
 
 
@@ -131,28 +117,40 @@ def build_chain():
         accepts = "application/json"
 
         def transform_input(self, prompt: str, model_kwargs: dict) -> bytes:
-            input_str = json.dumps({"inputs": prompt, **model_kwargs})
-            return input_str.encode('utf-8')
+            system_prompt = "You are a helpful assistant. Always answer to questions as helpfully as possible." \
+                            " If you don't know the answer to a question, say I don't know the answer"
+
+            payload = {
+                "inputs": [
+                    [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
+                ],
+                "parameters": model_kwargs,
+            }
+            input_str = json.dumps(payload)
+            return input_str.encode("utf-8")
 
         def transform_output(self, output: bytes) -> str:
             response_json = json.loads(output.read().decode("utf-8"))
-            return response_json[0]["generated_text"]
+            content = response_json[0]["generation"]["content"]
+            return content
 
     content_handler = ContentHandler()
 
     model_kwargs = {
-      "max_length": 500,
-      "num_return_sequences": 1,
-      "top_k": 250,
-      "top_p": 0.95,
-      "do_sample": False,
-      "temperature": 1
+        "max_new_tokens": 256,
+        "top_p": 0.9,
+        "temperature": 0.6,
+        "return_full_text": False,
     }
 
     llm = SagemakerEndpoint(
         endpoint_name=text2text_model_endpoint,
         region_name=region,
         model_kwargs=model_kwargs,
+        endpoint_kwargs={"CustomAttributes": "accept_eula=true"},
         content_handler=content_handler
     )
 
@@ -178,22 +176,14 @@ def build_chain():
         template=prompt_template, input_variables=["context", "question"]
     )
 
-    condense_qa_template = """
-    Given the following conversation and a follow up question, rephrase the follow up question
-    to be a standalone question.
-
-    Chat History:
-    {chat_history}
-    Follow Up Input: {question}
-    Standalone question:"""
-    standalone_question_prompt = PromptTemplate.from_template(condense_qa_template)
-
-    qa = ConversationalRetrievalChain.from_llm(
-        llm=llm,
+    chain_type_kwargs = {"prompt": PROMPT, "verbose": True}
+    qa = RetrievalQA.from_chain_type(
+        llm,
+        chain_type="stuff",
         retriever=retriever,
-        condense_question_prompt=standalone_question_prompt,
+        chain_type_kwargs=chain_type_kwargs,
         return_source_documents=True,
-        combine_docs_chain_kwargs={"prompt":PROMPT}
+        verbose=True, #DEBUG
     )
 
     logger.info(f"\ntype('qa'): \"{type(qa)}\"\n")
@@ -201,29 +191,19 @@ def build_chain():
 
 
 def run_chain(chain, prompt: str, history=[]):
-   return chain.invoke({"question": prompt, "chat_history": history})
+    result = chain(prompt, include_run_info=True)
+    # To make it compatible with chat samples
+    return {
+        "answer": result['result'],
+        "source_documents": result['source_documents']
+    }
 
 
 if __name__ == "__main__":
-    chat_history = []
-    qa = build_chain()
-    print(bcolors.OKBLUE + "Hello! How can I help you?" + bcolors.ENDC)
-    print(bcolors.OKCYAN + "Ask a question, start a New search: or CTRL-D to exit." + bcolors.ENDC)
-    print(">", end=" ", flush=True)
-    for query in sys.stdin:
-        if (query.strip().lower().startswith("new search:")):
-            query = query.strip().lower().replace("new search:","")
-            chat_history = []
-        elif (len(chat_history) == MAX_HISTORY_LENGTH):
-            chat_history.pop(0)
-        result = run_chain(qa, query, chat_history)
-        chat_history.append((query, result["answer"]))
-        print(bcolors.OKGREEN + result['answer'] + bcolors.ENDC)
-        if 'source_documents' in result:
-            print(bcolors.OKGREEN + 'Sources:')
-            for d in result['source_documents']:
-                print(d.metadata['source'])
-        print(bcolors.ENDC)
-        print(bcolors.OKCYAN + "Ask a question, start a New search: or CTRL-D to exit." + bcolors.ENDC)
-        print(">", end=" ", flush=True)
-    print(bcolors.OKBLUE + "Bye" + bcolors.ENDC)
+    chain = build_chain()
+    result = run_chain(chain, "What is SageMaker model monitor? Write your answer in a nicely formatted way.")
+    print(result['answer'])
+    if 'source_documents' in result:
+        print('Sources:')
+        for d in result['source_documents']:
+          print(d.metadata['source'])
