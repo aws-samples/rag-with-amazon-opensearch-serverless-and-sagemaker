@@ -58,7 +58,9 @@ For example:
 }
 </pre>
 
-:information_source: The `model_id`, and `version` provided by SageMaker JumpStart can be found in [**SageMaker Built-in Algorithms with pre-trained Model Table**](https://sagemaker.readthedocs.io/en/stable/doc_utils/pretrainedmodels.html).
+> :information_source: `AWS_IAM_User_Name` should have privileges to sign in and have permissions to to use Amazon OpenSearch Serverless resources.
+
+> :information_source: The `model_id`, and `version` provided by SageMaker JumpStart can be found in [**SageMaker Built-in Algorithms with pre-trained Model Table**](https://sagemaker.readthedocs.io/en/stable/doc_utils/pretrainedmodels.html).
 
 > :warning: **Important**: Make sure you need to make sure `docker daemon` is running.<br/>
 > Otherwise you will encounter the following errors:
